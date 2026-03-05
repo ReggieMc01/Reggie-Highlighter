@@ -1,0 +1,62 @@
+/* Reggie Highlighter – Highlight Styles */
+
+.reggie-highlight {
+  border-radius: 3px;
+  padding: 1px 3px;
+  cursor: pointer;
+  transition: background-color 0.2s, box-shadow 0.2s;
+  position: relative;
+}
+
+/* High importance (score >= 0.7) */
+.reggie-highlight.reggie-high {
+  background-color: rgba(0, 212, 255, 0.25);
+  border-bottom: 2px solid #00d4ff;
+}
+
+.reggie-highlight.reggie-high:hover {
+  background-color: rgba(0, 212, 255, 0.40);
+  box-shadow: 0 0 8px rgba(0, 212, 255, 0.3);
+}
+
+/* Medium importance (0.4 <= score < 0.7) */
+.reggie-highlight.reggie-mid {
+  background-color: rgba(255, 193, 7, 0.20);
+  border-bottom: 2px solid #ffc107;
+}
+
+.reggie-highlight.reggie-mid:hover {
+  background-color: rgba(255, 193, 7, 0.35);
+  box-shadow: 0 0 8px rgba(255, 193, 7, 0.3);
+}
+
+/* Low importance (score < 0.4) */
+.reggie-highlight.reggie-low {
+  background-color: rgba(150, 150, 150, 0.15);
+  border-bottom: 2px solid #999;
+}
+
+.reggie-highlight.reggie-low:hover {
+  background-color: rgba(150, 150, 150, 0.30);
+}
+
+/* Tooltip */
+.reggie-tooltip {
+  position: absolute;
+  z-index: 2147483647;
+  background: #1a1a2e;
+  color: #e0e0e0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  max-width: 280px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  border: 1px solid #333;
+  pointer-events: none;
+}
+
+.reggie-tooltip strong {
+  color: #00d4ff;
+}
