@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reggie Highlighter</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>✨ Reggie Highlighter</h1>
+      <p class="subtitle">AI-powered key concept extraction</p>
+    </header>
+
+    <!-- API Key Setup -->
+    <div id="setup-section" class="section hidden">
+      <label for="api-key-input">OpenAI API Key</label>
+      <div class="input-row">
+        <input type="password" id="api-key-input" placeholder="sk-..." autocomplete="off">
+        <button id="save-key-btn" class="btn btn-small">Save</button>
+      </div>
+      <p class="hint">Your key is stored locally and never sent anywhere except OpenAI.</p>
+    </div>
+
+    <!-- Controls -->
+    <div id="controls-section" class="section">
+      <div class="mode-toggle">
+        <label>Analyze:</label>
+        <select id="mode-select" title="Analysis mode">
+          <option value="selection">Selected Text</option>
+          <option value="page">Entire Page</option>
+        </select>
+      </div>
+      <button id="analyze-btn" class="btn btn-primary">🔍 Analyze & Highlight</button>
+      <button id="clear-btn" class="btn btn-secondary">🧹 Clear Highlights</button>
+    </div>
+
+    <!-- Status -->
+    <div id="status" class="status hidden"></div>
+
+    <!-- Results -->
+    <div id="results-section" class="section hidden">
+      <h2>Key Concepts</h2>
+      <ul id="results-list"></ul>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      <button id="settings-toggle" class="link-btn">⚙️ Settings</button>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

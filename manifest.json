@@ -1,12 +1,15 @@
 {
   "manifest_version": 3,
-  "name": "AI Translator",
-  "version": "2.0.0",
-  "description": "Translate typed or pasted text using OpenRouter free-tier models.",
-  "permissions": ["storage", "clipboardWrite"],
-  "host_permissions": ["https://openrouter.ai/*"],
+  "name": "Reggie Highlighter",
+  "version": "1.0.0",
+  "description": "Highlight the most important words and phrases on any webpage using AI-powered analysis.",
+  "permissions": [
+    "activeTab",
+    "storage"
+  ],
   "action": {
-    "default_popup": "popup.html",
+    "default_popup": "popup/popup.html",
+>>>>>>> eaee833303917e4af8604747398e044c2a1bf1ef
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
@@ -17,5 +20,17 @@
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
     "128": "icons/icon128.png"
-  }
+  },
+  "background": {
+    "service_worker": "background/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "css": ["content/highlight.css"],
+      "js": ["content/content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+>>>>>>> eaee833303917e4af8604747398e044c2a1bf1ef
 }
