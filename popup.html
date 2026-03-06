@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Translator</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="panel">
+    <h1>AI Translator</h1>
+
+    <label for="apiKey">OpenRouter API Key</label>
+    <div class="key-row">
+      <input id="apiKey" type="password" placeholder="sk-or-v1-..." autocomplete="off">
+      <button id="toggleKeyBtn" type="button" class="secondary-btn">Show</button>
+    </div>
+
+    <label for="model">Model Name</label>
+    <input id="model" type="text" placeholder="openrouter/auto" autocomplete="off">
+    <a class="api-link" href="https://openrouter.ai/keys" target="_blank" rel="noopener noreferrer">Get OpenRouter API key</a>
+
+    <label for="language">Target Language</label>
+    <select id="language">
+      <option value="Spanish">Spanish</option>
+      <option value="French">French</option>
+      <option value="German">German</option>
+      <option value="Japanese">Japanese</option>
+      <option value="Korean">Korean</option>
+      <option value="Chinese Simplified">Chinese Simplified</option>
+      <option value="Arabic">Arabic</option>
+      <option value="Portuguese">Portuguese</option>
+      <option value="Italian">Italian</option>
+      <option value="Russian">Russian</option>
+      <option value="Hindi">Hindi</option>
+    </select>
+
+    <label for="sourceText">Text To Translate</label>
+    <textarea id="sourceText" placeholder="Paste or type text here..."></textarea>
+
+    <button id="translateBtn" type="button">Translate</button>
+
+    <label for="result">Translation</label>
+    <textarea id="result" readonly placeholder="Translation will appear here..."></textarea>
+
+    <button id="copyBtn" type="button" disabled>Copy Translation</button>
+    <p id="status" aria-live="polite"></p>
+  </main>
+
+  <script src="popup.js" defer></script>
+</body>
+</html>
