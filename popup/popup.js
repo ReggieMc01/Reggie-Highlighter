@@ -1,151 +1,127 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  const analyzeBtn = document.getElementById('analyze-btn');
-  const clearBtn = document.getElementById('clear-btn');
-  const statusEl = document.getElementById('status');
-  const resultsSection = document.getElementById('results-section');
-  const resultsList = document.getElementById('results-list');
-  const modeSelect = document.getElementById('mode-select');
-  const setupSection = document.getElementById('setup-section');
-  const saveKeyBtn = document.getElementById('save-key-btn');
   const apiKeyInput = document.getElementById('api-key-input');
-  const settingsToggle = document.getElementById('settings-toggle');
+  const toggleKeyBtn = document.getElementById('toggle-key-btn');
+  const languageSelect = document.getElementById('language-select');
+  const wordInput = document.getElementById('word-input');
+  const translateBtn = document.getElementById('translate-btn');
+  const resultBox = document.getElementById('result');
+  const copyBtn = document.getElementById('copy-btn');
+  const statusEl = document.getElementById('status');
 
-  // Check for saved API key
-  const { apiKey } = await chrome.storage.local.get('apiKey');
-  if (!apiKey) {
-    setupSection.classList.remove('hidden');
-  }
+  // Load saved API key and language
+  const saved = await chrome.storage.local.get(['openrouterKey', 'targetLang']);
+  apiKeyInput.value = saved.openrouterKey || '';
+  if (saved.targetLang) languageSelect.value = saved.targetLang;
 
-  // Toggle settings
-  settingsToggle.addEventListener('click', () => {
-    setupSection.classList.toggle('hidden');
+  apiKeyInput.addEventListener('input', () => {
+    chrome.storage.local.set({ openrouterKey: apiKeyInput.value.trim() });
   });
 
-  // Save API key
-  saveKeyBtn.addEventListener('click', async () => {
-    const key = apiKeyInput.value.trim();
-    if (!key) return;
-    await chrome.storage.local.set({ apiKey: key });
-    apiKeyInput.value = '';
-    showStatus('API key saved!', 'success');
-    setTimeout(() => {
-      setupSection.classList.add('hidden');
-      hideStatus();
-    }, 1500);
+  toggleKeyBtn.addEventListener('click', () => {
+    const showKey = apiKeyInput.type === 'password';
+    apiKeyInput.type = showKey ? 'text' : 'password';
+    toggleKeyBtn.textContent = showKey ? 'Hide' : 'Show';
   });
 
-  // Analyze button
-  analyzeBtn.addEventListener('click', async () => {
-    const { apiKey: savedKey } = await chrome.storage.local.get('apiKey');
-    if (!savedKey) {
-      setupSection.classList.remove('hidden');
-      showStatus('Please set your OpenAI API key first.', 'error');
+  languageSelect.addEventListener('change', () => {
+    chrome.storage.local.set({ targetLang: languageSelect.value });
+  });
+
+  translateBtn.addEventListener('click', async () => {
+    const apiKey = apiKeyInput.value.trim();
+    const targetLang = languageSelect.value;
+    const word = wordInput.value.trim();
+    if (!apiKey) {
+      setStatus('Enter your OpenRouter API key first.', true);
       return;
     }
-
-    const mode = modeSelect.value;
-    analyzeBtn.disabled = true;
-    showStatus('⏳ Analyzing text...', 'loading');
-    resultsSection.classList.add('hidden');
-
-    try {
-      // Get the active tab
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-
-      // Get text from the page
-      const [{ result: text }] = await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: (mode) => {
-          if (mode === 'selection') {
-            const sel = window.getSelection().toString().trim();
-            if (sel) return sel;
-          }
-          // Fallback to page body text
-          return document.body.innerText.substring(0, 8000);
-        },
-        args: [mode]
-      });
-
-      if (!text || text.length < 10) {
-        showStatus('Not enough text found. Select some text or switch to "Entire Page".', 'error');
-        analyzeBtn.disabled = false;
-        return;
-      }
-
-      // Send to background for AI analysis
-      const response = await chrome.runtime.sendMessage({
-        action: 'analyze',
-        text: text.substring(0, 8000),
-        apiKey: savedKey
-      });
-
-      if (response.error) {
-        showStatus(`Error: ${response.error}`, 'error');
-        analyzeBtn.disabled = false;
-        return;
-      }
-
-      // Display results in popup
-      displayResults(response.data);
-
-      // Send highlights to content script
-      await chrome.tabs.sendMessage(tab.id, {
-        action: 'highlight',
-        highlights: response.data.highlights
-      });
-
-      showStatus(`Found ${response.data.highlights.length} key concepts!`, 'success');
-    } catch (err) {
-      showStatus(`Error: ${err.message}`, 'error');
+    if (!word) {
+      setStatus('Enter or select a word to translate.', true);
+      return;
     }
-
-    analyzeBtn.disabled = false;
+    setLoading(true);
+    setStatus('Translating...', false);
+    try {
+      const translated = await translateWord(word, targetLang, apiKey);
+      resultBox.value = translated;
+      copyBtn.disabled = translated.length === 0;
+      setStatus('Translation complete.', false);
+    } catch (error) {
+      resultBox.value = '';
+      copyBtn.disabled = true;
+      setStatus(error.message || 'Translation failed.', true);
+    } finally {
+      setLoading(false);
+    }
   });
 
-  // Clear highlights
-  clearBtn.addEventListener('click', async () => {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    await chrome.tabs.sendMessage(tab.id, { action: 'clearHighlights' });
-    resultsSection.classList.add('hidden');
-    hideStatus();
+  copyBtn.addEventListener('click', async () => {
+    if (!resultBox.value.trim()) return;
+    try {
+      await navigator.clipboard.writeText(resultBox.value);
+      setStatus('Copied to clipboard.', false);
+    } catch {
+      setStatus('Copy failed. Select and copy manually.', true);
+    }
   });
 
-  function displayResults(data) {
-    resultsList.innerHTML = '';
-    if (!data.highlights || data.highlights.length === 0) return;
+  function setLoading(isLoading) {
+    translateBtn.disabled = isLoading;
+    translateBtn.textContent = isLoading ? 'Translating...' : 'Translate';
+  }
 
-    data.highlights.forEach(item => {
-      const li = document.createElement('li');
+  function setStatus(message, isError) {
+    statusEl.textContent = message;
+    statusEl.style.color = isError ? '#fca5a5' : '#93c5fd';
+  }
 
-      const scoreClass = item.score >= 0.7 ? 'score-high' : item.score >= 0.4 ? 'score-mid' : 'score-low';
-      const explanation = data.explanations?.[item.text] || '';
-
-      li.innerHTML = `
-        <span class="score-badge ${scoreClass}">${item.score.toFixed(1)}</span>
-        <div>
-          <div class="result-text">${escapeHtml(item.text)}</div>
-          ${explanation ? `<div class="result-explanation">${escapeHtml(explanation)}</div>` : ''}
-        </div>
-      `;
-      resultsList.appendChild(li);
+  async function translateWord(word, targetLang, apiKey) {
+    const API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+        'HTTP-Referer': 'https://github.com',
+        'X-Title': 'AI Translator Extension'
+      },
+      body: JSON.stringify({
+        model: 'openrouter/auto',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a translation engine. Return only translated text with no notes or labels.'
+          },
+          {
+            role: 'user',
+            content: `Translate this word to ${targetLang}:\n\n${word}`
+          }
+        ],
+        temperature: 0.1
+      })
     });
 
-    resultsSection.classList.remove('hidden');
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Invalid OpenRouter API key. Create one at openrouter.ai/keys.');
+      }
+      if (response.status === 402) {
+        throw new Error('OpenRouter credits are required for this model. Pick a free model in your OpenRouter dashboard.');
+      }
+      throw new Error('Translation failed.');
+    }
+
+    const data = await response.json();
+    const translated = data.choices?.[0]?.message?.content?.trim();
+    if (!translated) throw new Error('Empty response from provider.');
+    return translated;
   }
 
-  function showStatus(msg, type) {
-    statusEl.textContent = msg;
-    statusEl.className = `status ${type}`;
-    statusEl.classList.remove('hidden');
-  }
-
-  function hideStatus() {
-    statusEl.classList.add('hidden');
-  }
-
-  function escapeHtml(str) {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-  }
+  // Listen for selected word from content script
+  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+    if (msg.type === 'WORD_SELECTED' && msg.word) {
+      wordInput.value = msg.word;
+      setStatus('Word loaded from page selection.', false);
+    }
+  });
 });
